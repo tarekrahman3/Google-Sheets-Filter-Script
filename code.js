@@ -1,21 +1,25 @@
+const filterTabName = 'GenresFilter';
+const mainTabName = 'template';
+
 function onEdit(e) {
   const sheet = e.range.getSheet();
   const sheetName = sheet.getName();
   const columnNumber = e.range.getColumn();
   const rowNumber = e.range.getRow();
   Logger.log(`Edited cells in sheet ${sheetName} column ${columnNumber} row ${rowNumber}`);
-  if (sheetName === 'GenresFilter' && inRange(columnNumber, 1, 16) && rowNumber === 2) {
+  if (sheetName === filterTabName && inRange(columnNumber, 1, 16) && rowNumber === 2) {
     const check_boxes_status = checkBoxesStatus();
     if (Object.keys(check_boxes_status).filter((key) => check_boxes_status[key]).length==0){
-     SpreadsheetApp.getActiveSpreadsheet().getSheetByName('template').getFilter().remove()
+     SpreadsheetApp.getActiveSpreadsheet().getSheetByName(mainTabName).getFilter().remove()
     }
     else if (check_boxes_status) {
       applyFilter(check_boxes_status);
     }
   }
 }
+
 function applyFilter(check_boxes_status) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('template');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(mainTabName);
   if (sheet.getFilter()){
     sheet.getFilter().remove();
   }
@@ -25,7 +29,7 @@ function applyFilter(check_boxes_status) {
 }
 
 function checkBoxesStatus() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('GenresFilter');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(filterTabName);
   const values = sheet.getRange('A2:O2').getValues()[0];
   const dict = {};
   for (let i = 0; i < values.length; i++) {
@@ -66,21 +70,24 @@ function generateFormula(dict) {
   return formula;
 }
 
-function synchronizer_viewer() {
-  const ui = SpreadsheetApp.getUi()
-  var interface = HtmlService
-    .createHtmlOutputFromFile('filtered_data_visualizer')
-    .setWidth(1200)
-    .setHeight(700);
-  ui.showModelessDialog(interface,"Google Calendar Updater")
-}
+function columnRangeDict(start, end) {
+  function columnToInt(column) {
+    let num = 0;
+    for (let char of column) {
+      num = num * 26 + (char.toUpperCase().charCodeAt(0) - "A".charCodeAt(0) + 1);
+    }
+    return num;
+  }
 
-function generate_template(rowDict){
-  return [
-    rowDict['Company Name (festival name)'],
-    rowDict['City']+", "+rowDict['Country'],
-    new Date(rowDict['start date 2023']).toUTCString(),
-    new Date(rowDict['end date 2023']).toUTCString(),
-    rowDict['Festival Tags (fx)']+"\n"+rowDict['festival url']+ "\n" +rowDict['company email']+ "\n" +rowDict['Festival Notes']
-  ]
+  const startInt = columnToInt(start);
+  const endInt = columnToInt(end);
+
+  const columnDict = {};
+  for (let i = 0; i <= endInt - startInt; i++) {
+    const firstLetter = String.fromCharCode(65 + (startInt - 1 + i) % 26);
+    const secondLetter = startInt - 1 + i < 26 ? "" : String.fromCharCode(65 + Math.floor((startInt - 1 + i) / 26) - 1);
+    columnDict[i + 1] = secondLetter + firstLetter;
+  }
+
+  return columnDict;
 }
