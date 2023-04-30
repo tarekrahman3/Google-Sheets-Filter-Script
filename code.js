@@ -43,23 +43,8 @@ function inRange(x, min, max) {
 }
 
 function getCorrespondingColumn(input_column_number) {
-  const structure = {
-    1: 'O',
-    2: 'P',
-    3: 'Q',
-    4: 'R',
-    5: 'S',
-    6: 'T',
-    7: 'U',
-    8: 'V',
-    9: 'W',
-    10:'X',
-    11:'Y',
-    12:'Z',
-    13:"AA",
-    14:"AB",
-    15:"AC"
-  };
+  const mappings =getMapping()
+  const structure = columnRangeDict(mappings[0],mappings[1]);
   return `${structure[input_column_number]}2`;
 }
 
@@ -70,24 +55,30 @@ function generateFormula(dict) {
   return formula;
 }
 
-function columnRangeDict(start, end) {
-  function columnToInt(column) {
-    let num = 0;
-    for (let char of column) {
-      num = num * 26 + (char.toUpperCase().charCodeAt(0) - "A".charCodeAt(0) + 1);
-    }
-    return num;
-  }
-
+function columnRangeDict(start,end) {  
   const startInt = columnToInt(start);
   const endInt = columnToInt(end);
-
   const columnDict = {};
   for (let i = 0; i <= endInt - startInt; i++) {
     const firstLetter = String.fromCharCode(65 + (startInt - 1 + i) % 26);
     const secondLetter = startInt - 1 + i < 26 ? "" : String.fromCharCode(65 + Math.floor((startInt - 1 + i) / 26) - 1);
     columnDict[i + 1] = secondLetter + firstLetter;
   }
-
   return columnDict;
+}
+
+function columnToInt(column) {
+  let num = 0;
+  for (let char of column) {
+    num = num * 26 + (char.toUpperCase().charCodeAt(0) - "A".charCodeAt(0) + 1);
+  }
+  return num;
+}
+
+function getMapping() {
+  var headers = columnRangeDict('A','AZ')
+  var l = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('template').getRange('A1:1').getValues()[0]
+  var start = l.indexOf('SHOWCASE')+1;
+  var end = l.indexOf('IMPROV')+1;
+  return [headers[start],headers[end]]
 }
