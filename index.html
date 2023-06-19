@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
+        <style>
+            .wrapper {
+                background-color: blanchedalmond;
+            }
+            .dateContainer,
+            .applyButtonContainer {
+                display: flex;
+                gap: 10px;
+            }
+            .toDateLabel {
+                margin-right: 20px;
+            }
+            .applyButtonContainer {
+                display: grid;
+                align-items: center;
+            }
+            .spinner-border {
+                position: relative;
+                
+                top: 25%;
+                left: 46%;
+            }
+            #loadingSpinner {
+              margin-top:5px;
+            }
+        </style>
+        <title>Document</title>
+    </head>
+    <body>
+        <div class="container">
+            <div class="card card-body" id="genres_container">
+                <label class="form-label">GENRES:</label>
+            </div>
+            <div class="card card-body">
+                <label for="fromDate" class="form-label">Festivals Range</label>
+                <div class="dateContainer">
+                    <label >From</label>
+                    <input id="fromDate" type="date" />
+                </div>
+                <div class="dateContainer">
+                    <label class="toDateLabel">To</label>
+                    <input id="toDate" type="date" />
+                </div>
+            </div>
+            <div class="applyButtonContainer">
+                <button id="submitBtn" type="button" class="btn btn-primary">Apply</button>
+                <div id="loadingSpinner"></div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+        <script>
+            class Filter {
+                constructor() {
+                    this.genereCheckboxs = [
+                        { name: "SHOWCASE", isChecked: false },
+                        { name: "SPECIALIST", isChecked: false },
+                        { name: "ALL ONE TRAD", isChecked: false },
+                        { name: "ROCK & POP", isChecked: false },
+                        { name: "TRAD", isChecked: false },
+                        { name: "ELECTRONIC", isChecked: false },
+                        { name: "CLUBDJ", isChecked: false },
+                        { name: "EXPERIMENTAL", isChecked: false },
+                        { name: "FOLK", isChecked: false },
+                        { name: "GLOBAL", isChecked: false },
+                        { name: "JAZZ", isChecked: false },
+                        { name: "CLASSICAL", isChecked: false },
+                        { name: "HIP HOP", isChecked: false },
+                        { name: "AMBIENT", isChecked: false },
+                        { name: "IMPROV", isChecked: false },
+                    ];
+                    this.fromDate = null;
+                    this.toDate = null;
+                }
+                setCheckboxValue(index, value) {
+                    console.log(`index: ${index}, value: ${value}`);
+                    this.genereCheckboxs[index].isChecked = value;
+                }
+                setfromDate(value) {
+                    console.log(`new start date value: ${value}`);
+                    this.fromDate = new Date(value);
+                }
+                settoDate(value) {
+                    console.log(`new end date value: ${value}`);
+                    this.toDate = new Date(value);
+                }
+            }
+
+            const filter = new Filter();
+            let genre_container = document.getElementById("genres_container");
+            let toDate = document.getElementById("toDate");
+            let fromDate = document.getElementById("fromDate");
+            let submitBtn = document.getElementById("submitBtn");
+            // SET DATE VALUE ON CHANGE
+            fromDate.addEventListener("change", (e) => filter.setfromDate(e.target.value));
+            toDate.addEventListener("change", (e) => filter.settoDate(e.target.value));
+            // ON CLICK
+            submitBtn.addEventListener("click", (e) => {
+                const value = {
+                    fromDate: filter.fromDate != null ? filter.fromDate.toString() : null,
+                    toDate: filter.toDate != null ? filter.toDate.toString() : null,
+                    generes: filter.genereCheckboxs,
+                };
+                console.log(value);
+                callSetFilterValuesFunction(value);
+            });
+            // RENDER CHECKBOXES WITH DEFAULT VALUE
+            for (let index = 0; index < filter.genereCheckboxs.length; index++) {
+                const genre = filter.genereCheckboxs[index];
+                let divElement = document.createElement("div");
+                divElement.innerHTML = `
+                      <div>
+                        <input
+                          onchange="getGenreFilterValues(this)"
+                          index="${index}"
+                          type="checkbox"
+                          id="checkbox_of_${genre.name}"
+                          name="${genre.name}"
+                          ${genre.isChecked ? "checked" : ""}
+                        >
+                        <label for="checkbox_of_${genre.name}">${genre.name}</label>
+                      </div>`;
+                genre_container.appendChild(divElement);
+            }
+
+            // SET FILTER VALUE ON CHANGE
+            function getGenreFilterValues(element) {
+                const index = Number(element.getAttribute("index"));
+                filter.setCheckboxValue(index, element.checked);
+            }
+
+            function callSetFilterValuesFunction(value) {
+                // Show loading spinner
+                let loadingSpinner = document.getElementById("loadingSpinner");
+                loadingSpinner.innerHTML = '<div class="spinner-border" role="status"></div>';
+                // Disable the button
+                submitBtn.disabled = true;
+                submitBtn.setAttribute('style','display:none;')
+                // Make the backend call
+                google.script.run.withSuccessHandler(handleFilterSuccess).setFilterValuesFunction(value);
+            }
+            // Handle success signal from backend
+            function handleFilterSuccess(successSignal) {
+                // Remove loading spinner
+                let loadingSpinner = document.getElementById("loadingSpinner");
+                loadingSpinner.innerHTML = "";
+                // Enable the button
+                submitBtn.disabled = false;
+                submitBtn.setAttribute('style','display:;')
+                // Check success signal
+                if (successSignal === 0) {
+                    // Filter applied successfully
+                    console.log("Filter applied successfully.");
+                } else {
+                    // Handle error or other success signals
+                    console.log("Filter application failed or received different success signal.");
+                }
+            }
+        </script>
+    </body>
+</html>
