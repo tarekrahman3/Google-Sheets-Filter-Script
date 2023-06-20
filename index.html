@@ -104,8 +104,8 @@
             // ON CLICK
             submitBtn.addEventListener("click", (e) => {
                 const value = {
-                    fromDate: filter.fromDate != null ? filter.fromDate.toString() : null,
-                    toDate: filter.toDate != null ? filter.toDate.toString() : null,
+                    fromDate: filter.fromDate != null && filter.fromDate !='' ? filter.fromDate.toUTCString().slice(0,16) : null,
+                    toDate: filter.toDate != null && filter.toDate != '' ? filter.toDate.toUTCString().slice(0,16) : null,
                     generes: filter.genereCheckboxs,
                 };
                 console.log(value);

@@ -193,12 +193,14 @@ function getDateConditions(fromDate, toDate) {
 }
 
 function formatDate(date) {
-  const formattedDate = new Date(date).toLocaleDateString('en-US');
+  const formattedDate = new Date(date).toUTCString().slice(0,16);
   return formattedDate;
 }
 
 function isValidDate(date) {
-  return date != null && date !== '1/1/1970' && !isNaN(Date.parse(date));
+  const isvalid = date != null && date !== '1/1/1970' && !isNaN(Date.parse(date)) && (new Date(Date.parse(date))>new Date(Date.parse("12/31/2021")));
+  Logger.log(`isvalid:${isvalid}`)
+  return isvalid;
 }
 
 function getCorrespondingColumn(input_column_number) {
